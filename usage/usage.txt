@@ -1,0 +1,65 @@
+//usage with function
+
+@GetAndSetComponentState({
+        nameOfComponent: "PatientDetailsComponent",
+        componentPropertyToUseAsKey: "patientId",
+        properties: ["openedTab", "patient"],
+        functionsToExecuteAfterGettingState: ["afterGettingComponentState"],
+        whenToGetState: MethodFilter.AfterExecution,
+    })
+    changePatient(params) {
+        this.unsubscribe();
+        let id = params['id'];
+        this.patientId = id;
+        // 1 - from Page Patient Search
+        // 2 - from Page Patient Profile
+        this.globalSettingService.setGlobalAccount = id;
+        if (this.route.snapshot.queryParams['callFrom'] == "menu") {
+            this.GetpatientDetials(id, 0);
+        } else {
+            this.GetpatientDetials(id, 1);
+        }
+        this.ISCCMConsentTaken();
+        if (this.route.firstChild) {
+            this.route.firstChild.url.subscribe((urlSegments) => { if (urlSegments[0].path) { this.openedTab = urlSegments[0].path; } });
+        }
+    }
+
+ @SaveComponentState({
+        nameOfComponent: "PatientDetailsComponent",
+        componentPropertyToUseAsKey: "patientId",
+        properties: ["openedTab", "patient"],
+        whenToSaveState: MethodFilter.AfterExecution,
+    })
+    ngOnDestroy() {
+        // Clean sub to avoid memory leak
+        if (this.sub != undefined) {
+            this.sub.unsubscribe();
+        }
+        this.InvitePatientPortalComp.clear();
+        this.botSettServ.set_Window_Bot_Listening_Active = false;
+    }
+
+// usage with component
+
+@State({
+    nameOfComponent: "ClaimComponent",
+    componentPropertyToUseAsKey: "patientAccountToGetAndSetState",
+    properties: ["SelectedClaim", "selectedClaimNumber", "isEditMode", "isRecentClaimsSidePanelOpen", "scrubClaimError", "irbsClaimContentResponse"],
+    functionsToExecuteAfterGettingState: ["afterGettingComponentState"],
+    whenToGetState: MethodFilter.AfterExecution,
+    whenToSaveState: MethodFilter.AfterExecution,
+})
+@Component({
+    selector: 'app-claim',
+    templateUrl: './claim.component.html',
+    styleUrls: ['./claim.component.css'],
+    providers: [ClaimService, AFUtills, CommonWebServices, PatientService, ActivityService, BotSettingService, patientStatementService, EClaimSumissionService, PTLReportService, UploadService, SuppliesInventoryService, PatientHistoryWebApi],
+    host: {
+        '(document:click)': 'handleClickEvents($event)', 'window:beforeunload': 'SaveClaimOnClose()'
+    }
+})
+
+//
+
+
